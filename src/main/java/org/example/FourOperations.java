@@ -9,7 +9,7 @@ public class FourOperations {
     private static int numberOfExercises;
     private static int range;
     private static final String[] OPERATORS = {"+", "-", "*", "/"};
-    private static Set<String> generatedExercises = new HashSet<>();
+    private static List<String> generatedExercises = new ArrayList<>();
     private static List<String> answers = new ArrayList<>();
 
     /**
@@ -54,9 +54,11 @@ public class FourOperations {
         Random rand = new Random();
         while (generatedExercises.size() < numberOfExercises) {
             String exercise = generateRandomExpression(rand);
-            generatedExercises.add(exercise);
-            double answer = evaluateExpression(exercise);
-            answers.add(String.valueOf(answer));
+            if (!generatedExercises.contains(exercise)) { // Check for uniqueness
+                generatedExercises.add(exercise);
+                double answer = evaluateExpression(exercise);
+                answers.add(String.valueOf(answer));
+            }
         }
     }
 
@@ -66,9 +68,19 @@ public class FourOperations {
      * @return
      */
     private static String generateRandomExpression(Random rand) {
-        String leftOperand = rand.nextBoolean() ? generateNaturalNumber(rand) : generateProperFraction(rand);
         String operator = OPERATORS[rand.nextInt(OPERATORS.length)];
-        String rightOperand = rand.nextBoolean() ? generateNaturalNumber(rand) : generateProperFraction(rand);
+        String leftOperand;
+        String rightOperand;
+        if (operator.equals("-")) {
+            // 对于减法，确保左操作数 >= 右操作数,保证结果不为负数
+            leftOperand = rand.nextBoolean() ? generateNaturalNumber(rand) : generateProperFraction(rand);
+            do {
+                rightOperand = rand.nextBoolean() ? generateNaturalNumber(rand) : generateProperFraction(rand);
+            } while (parseOperand(leftOperand) < parseOperand(rightOperand));
+        } else {
+            leftOperand = rand.nextBoolean() ? generateNaturalNumber(rand) : generateProperFraction(rand);
+            rightOperand = rand.nextBoolean() ? generateNaturalNumber(rand) : generateProperFraction(rand);
+        }
         return leftOperand + " " + operator + " " + rightOperand;
     }
 
@@ -136,10 +148,10 @@ public class FourOperations {
      * @param exercises
      * @throws IOException
      */
-    private static void writeToFile(String filename, Set<String> exercises) throws IOException {
+    private static void writeToFile(String filename, List<String> exercises) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
-            for (String exercise : exercises) {
-                writer.write(exercise);
+            for (int i = 0; i < exercises.size(); i++) {
+                writer.write((i + 1) + ". " + exercises.get(i));
                 writer.newLine();
             }
         }
@@ -153,8 +165,8 @@ public class FourOperations {
      */
     private static void writeAnswersToFile(String fileName, List<String> answers) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
-            for (String answer : answers) {
-                writer.write(answer);
+            for (int i = 0; i < answers.size(); i++) {
+                writer.write((i + 1) + ". " + answers.get(i));
                 writer.newLine();
             }
         }
